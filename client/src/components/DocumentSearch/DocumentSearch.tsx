@@ -1,13 +1,14 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Documents } from '../type';
+import { Documents } from '../types/type';
 import File from '../File/File';
-import './DocumentSearch.css';
+import style from './style.module.css';
 
 function DocumentSearch() {
   const [documents, setDocuments] = useState<Documents[]>([]);
-  const [props, setProps] = useState<Documents>();
-  const [id, setId] = useState();
-console.log(id)
+  const [documentProps, setDocumentProps] = useState<Documents>();
+  const [documentId, setDocumentId] = useState<string | undefined>();
+
+  const result = documents.slice(0, 4);
 
   useEffect(() => {
     fetch('http://68.183.212.124:3000/user/docs')
@@ -28,23 +29,23 @@ console.log(id)
 
   function handleFileClickInParent(document: Documents) {
     console.log('Кликнули на карточке с данными:', document);
-    setProps(document);
+    setDocumentProps(document);
   }
 
   function handleDelete() {
-    if (props) {
+    if (documentProps) {
       const updatedDocuments = documents.filter(
-        (document) => document.id !== props.id
+        (document) => document.id !== documentProps.id
       );
       setDocuments(updatedDocuments);
-      setProps(undefined);
+      setDocumentProps(undefined);
     }
   }
 
   function handleDownload() {
-    const textContent = `${props?.image} ${props?.name}
+    const textContent = `${documentProps?.image} ${documentProps?.name}
     Описание:
-    ${props?.description}
+    ${documentProps?.description}
     `;
     const blob = new Blob([textContent], { type: 'text/plain' });
 
@@ -57,53 +58,64 @@ console.log(id)
     URL.revokeObjectURL(url);
   }
 
-  const handleSearch:React.ChangeEventHandler<HTMLInputElement> = (event:any):void => {
-    event.preventDefault()
-    setId(event.target.value)
-  }
-
-  const doc = documents.slice(0, 4);
+  const handleSearch: React.ChangeEventHandler<HTMLInputElement> = (
+    event: any
+  ) => {
+    event.preventDefault();
+    setDocumentId(event.target.value);
+  };
 
   return (
     <>
-      <div className="search">
+      <div className={style.search}>
         <h4>Поиск документа</h4>
         <input
           type="text"
           placeholder="Введите ID документа"
-          onChange={(e)=>handleSearch(e)}
+          onChange={(e) => handleSearch(e)}
         />
         <h4>Результаты</h4>
-
-        {  doc.map((document: Documents) => (
-          <File
-            document={document}
-            onFileClick={handleFileClickInParent}
-            key={document.id}
-          />
-        ))}
+        {!documentId
+          ? result.map((document: Documents) => (
+              <File
+                document={document}
+                onFileClick={handleFileClickInParent}
+                key={document.id}
+              />
+            ))
+          : documents
+              .filter((el) => el.id === Number(documentId))
+              .map((document: Documents) => (
+                <File
+                  document={document}
+                  onFileClick={handleFileClickInParent}
+                  key={document.id}
+                />
+              ))}
       </div>
-      {props ? (
+      {documentProps ? (
         <>
-          <div className="info_document_img">
-            <img src={props.image} alt="" />
+          <div className={style.info_document_img}>
+            <img src={documentProps.image} alt="" />
           </div>
-          <div className="info_document_blok_description">
-            <h2>{props.name}</h2>
+          <div className={style.info_document_blok_description}>
+            <h2>{documentProps.name}</h2>
             <div>
-              <button className="info_document_btn1" onClick={handleDownload}>
+              <button className={style.info_document_btn1} onClick={handleDownload}>
                 Скачать
               </button>
-              <button className="info_document_btn2" onClick={handleDelete}>
+              <button className={style.info_document_btn2} onClick={handleDelete}>
                 Удалить
               </button>
             </div>
             <h2>Описание:</h2>
-            <div className="info_document_description">{props.description}</div>
+            <div className={style.info_document_description}>
+              {documentProps.description}
+            </div>
           </div>
         </>
       ) : (
-        <div className="text">
+        <div className={style.text}>
           <p>Выберите документ, чтобы посмотреть его содержиое</p>{' '}
         </div>
       )}
